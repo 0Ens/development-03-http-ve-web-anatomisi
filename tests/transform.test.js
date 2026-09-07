@@ -48,6 +48,32 @@ describe('findHottestDay', () => {
   });
 });
 
+// --- formatForecast ---
+
+describe('formatForecast', () => {
+  it('daily verisini gun bazli nesne dizisine donusturur', () => {
+    const result = formatForecast(fixture.daily);
+    assert.equal(result.length, fixture.daily.time.length);
+    assert.equal(result[0].date, fixture.daily.time[0]);
+    assert.equal(result[0].maxTemp, fixture.daily.temperature_2m_max[0]);
+    assert.equal(typeof result[0].precipitation, 'number');
+  });
+});
+
+// --- formatTemp ---
+
+describe('formatTemp', () => {
+  it('sayiyi bir ondalikli ve birimli string olarak dondurur', () => {
+    assert.equal(formatTemp(27), '27.0 °C');
+    assert.equal(formatTemp(3.567), '3.6 °C');
+  });
+
+  it('null ve NaN icin tire dondurur', () => {
+    assert.equal(formatTemp(null), '-');
+    assert.equal(formatTemp(NaN), '-');
+  });
+});
+
 // --- toErrorMessage ---
 
 describe('toErrorMessage', () => {
