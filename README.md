@@ -6,13 +6,13 @@ Open-Meteo public API üzerinden HTTP sözleşmesi keşfi; 4 endpoint'in doküma
 
 ## 1. DevTools Gözlemleri
 
-> **Nasıl doldurulur:** Tarayıcını aç → Network sekmesi → Fetch/XHR filtresi → herhangi bir siteyi gezin. Üç isteği seçip aşağıdaki tabloyu kendi gözlemlerinle doldur. "Yorum" sütununa "Bu istek bence şunu yapıyor" diye bir cümle ekle.
+Gözlem yapılan site: **github.com** — DevTools → Network → Fetch/XHR filtresi.
 
 | # | Site | Metot | URL (kısaltılmış) | Status | Content-Type | Süre | Yorum |
 |---|------|-------|-------------------|--------|--------------|------|-------|
-| 1 | — | — | — | — | — | — | — |
-| 2 | — | — | — | — | — | — | — |
-| 3 | — | — | — | — | — | — | — |
+| 1 | github.com | GET | `/_graphql?body=...IssueIndexPageQuery...` | 200 OK | application/json; charset=utf-8 | 250 ms | Bu istek bence repo'nun Issues sayfasını açarken GraphQL ile issue listesini çekiyor. |
+| 2 | github.com | GET | `/github-copilot/chat/entitlement` | 304 Not Modified | application/json | 589 ms | Bu istek bence Copilot Chat'in bu hesap için aktif olup olmadığını kontrol ediyor; 304 önbellekteki yanıtın hâlâ geçerli olduğunu söylüyor, yeni veri gönderilmiyor. |
+| 3 | github.com | GET | `/0Ens/development-03-http-ve-web-anatomisi/_sidebar` | 200 OK | application/json; charset=utf-8 | 476 ms | Bu istek bence repo sayfasının kenar çubuğunu (dallar, katkıda bulunanlar, etiketler) JSON olarak ayrı bir istekle yüklüyor. |
 
 ---
 
