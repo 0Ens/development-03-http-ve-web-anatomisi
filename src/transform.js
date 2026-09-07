@@ -38,6 +38,6 @@ export function formatForecast(daily) {
 }
 
 export function formatTemp(celsius) {
-  if (typeof celsius !== 'number' || Number.isNaN(celsius)) return '    -   ';
+  if (typeof celsius !== 'number' || Number.isNaN(celsius)) return '-';
   return `${celsius.toFixed(1)} °C`;
 }
