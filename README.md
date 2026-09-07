@@ -16,7 +16,20 @@ Gözlem yapılan site: **github.com** — DevTools → Network → Fetch/XHR fil
 
 ---
 
-## 2. API Sözleşmesi — Open-Meteo
+## 2. Postman Keşif Notları
+
+Seçilen API: **Open-Meteo** — anahtar gerektirmeyen, hız sınırı olmayan açık kaynaklı hava durumu API'si.
+
+Postman'de keşfedilen davranışlar:
+
+- `/v1/forecast` endpoint'ine `latitude=999` gönderildiğinde `400 Bad Request` geliyor ve body'de `reason` alanı neden hatalı olduğunu açıkça söylüyor. Bu alanı `toErrorMessage()` fonksiyonunda kullanarak kullanıcıya anlamlı mesaj gösterdim.
+- Geocoding API'si (`/v1/search`) bilinmeyen şehirde `404` değil, `200 OK` + boş `results` dizisi döndürüyor. Status code kontrolü tek başına yeterli değil; bu yüzden `results.length` da kontrol edilmesi gerekiyor.
+- `304 Not Modified` — GitHub DevTools gözlemlerinde göründü. Yanıtta body yok; sunucu önbellekteki verinin hâlâ geçerli olduğunu söylüyor.
+- Üretilen 400 hatası: `GET /v1/forecast?latitude=999&longitude=999&daily=temperature_2m_max&timezone=auto`
+
+---
+
+## 3. API Sözleşmesi — Open-Meteo
 
 Open-Meteo tamamen ücretsiz, anahtar gerektirmeyen açık kaynaklı bir hava durumu API'sidir.
 
