@@ -1,0 +1,1003 @@
+<title>HTTP ve Web Anatomisi</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+/* ── Tokens: dark-first ─────────────────────────────── */
+:root {
+  --bg:           #0b0d13;
+  --surface:      #131620;
+  --surface-2:    #1b1f2e;
+  --border:       #232840;
+  --text:         #dde3f0;
+  --text-muted:   #6e7a96;
+  --accent:       #818cf8;
+  --accent-dim:   rgba(129,140,248,.12);
+  --accent-line:  rgba(129,140,248,.35);
+  --code-bg:      #08090e;
+  --code-text:    #c9d1e8;
+
+  --ok:    #34d399; --ok-bg:    rgba(52,211,153,.1);
+  --err:   #f87171; --err-bg:   rgba(248,113,113,.1);
+  --warn:  #fbbf24; --warn-bg:  rgba(251,191,36,.1);
+  --cyan:  #22d3ee; --cyan-bg:  rgba(34,211,238,.1);
+  --pink:  #f472b6; --pink-bg:  rgba(244,114,182,.1);
+
+  --font-d: 'Fraunces', Georgia, serif;
+  --font-b: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-m: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:          #f3f4f9;
+    --surface:     #ffffff;
+    --surface-2:   #eaecf5;
+    --border:      #d8dcea;
+    --text:        #111827;
+    --text-muted:  #64748b;
+    --accent:      #4f46e5;
+    --accent-dim:  rgba(79,70,229,.07);
+    --accent-line: rgba(79,70,229,.25);
+    --code-bg:     #111827;
+    --code-text:   #c9d1e8;
+    --ok:    #059669; --ok-bg:   rgba(5,150,105,.08);
+    --err:   #dc2626; --err-bg:  rgba(220,38,38,.08);
+    --warn:  #b45309; --warn-bg: rgba(180,83,9,.08);
+    --cyan:  #0891b2; --cyan-bg: rgba(8,145,178,.08);
+    --pink:  #be185d; --pink-bg: rgba(190,24,93,.08);
+  }
+}
+
+:root[data-theme="light"] {
+  --bg:#f3f4f9;--surface:#ffffff;--surface-2:#eaecf5;--border:#d8dcea;
+  --text:#111827;--text-muted:#64748b;--accent:#4f46e5;
+  --accent-dim:rgba(79,70,229,.07);--accent-line:rgba(79,70,229,.25);
+  --code-bg:#111827;--code-text:#c9d1e8;
+  --ok:#059669;--ok-bg:rgba(5,150,105,.08);
+  --err:#dc2626;--err-bg:rgba(220,38,38,.08);
+  --warn:#b45309;--warn-bg:rgba(180,83,9,.08);
+  --cyan:#0891b2;--cyan-bg:rgba(8,145,178,.08);
+  --pink:#be185d;--pink-bg:rgba(190,24,93,.08);
+}
+
+/* ── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-b);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ── Layout ───────────────────────────────────────────── */
+.page { max-width: 780px; margin: 0 auto; padding: 0 24px; }
+.wide { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+/* ── Typography ───────────────────────────────────────── */
+h1, h2, h3 { text-wrap: balance; font-family: var(--font-d); font-weight: 500; }
+h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 1.1; letter-spacing: -0.02em; }
+h2 { font-size: 1.65rem; line-height: 1.25; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p  { max-width: 65ch; }
+
+code, .mono {
+  font-family: var(--font-m);
+  font-size: 0.82em;
+  background: var(--accent-dim);
+  color: var(--accent);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Section chrome ───────────────────────────────────── */
+.section {
+  padding: 64px 0 48px;
+  border-top: 1px solid var(--border);
+}
+.section:first-of-type { border-top: none; }
+
+.section-label {
+  font-family: var(--font-m);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label::before {
+  content: '';
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.section h2 { margin-bottom: 20px; }
+.section p + p { margin-top: 14px; }
+
+/* ── Hero ─────────────────────────────────────────────── */
+.hero {
+  padding: 80px 0 64px;
+}
+.hero-eyebrow {
+  font-family: var(--font-m);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.hero h1 { margin-bottom: 24px; }
+.hero h1 em { font-style: italic; color: var(--accent); }
+.hero-lead {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  max-width: 58ch;
+  line-height: 1.75;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 36px;
+}
+.tag {
+  font-family: var(--font-m);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+/* ── Code block ───────────────────────────────────────── */
+.code-wrap {
+  background: var(--code-bg);
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 28px 0;
+  border: 1px solid var(--border);
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-m);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.code-header .dots { display: flex; gap: 5px; }
+.code-header .dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-r { background: #ff5f56; }
+.dot-y { background: #ffbd2e; }
+.dot-g { background: #27c93f; }
+pre {
+  padding: 20px 20px;
+  font-family: var(--font-m);
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--code-text);
+  white-space: pre;
+}
+
+/* Syntax token colors in code */
+.t-kw  { color: #818cf8; }   /* keyword / method */
+.t-url { color: #22d3ee; }   /* URL */
+.t-hk  { color: #94a3b8; }   /* header key */
+.t-hv  { color: #c9d1e8; }   /* header value */
+.t-st  { color: #34d399; }   /* status 200 */
+.t-err { color: #f87171; }   /* status 400/404 */
+.t-key { color: #f472b6; }   /* JSON key */
+.t-str { color: #a3e635; }   /* string value */
+.t-num { color: #fb923c; }   /* number value */
+.t-cm  { color: #4b5568; font-style: italic; } /* comment */
+
+/* ── HTTP Anatomy split ───────────────────────────────── */
+.http-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 28px 0;
+}
+@media (max-width: 640px) { .http-split { grid-template-columns: 1fr; } }
+
+.http-box {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.http-box-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-m);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.arrow-right { color: var(--cyan); }
+.arrow-left  { color: var(--ok); }
+.http-box pre { padding: 14px 16px; font-size: 0.78rem; }
+
+/* ── Annotated request ───────────────────────────────── */
+.annotated { margin: 28px 0; }
+.ann-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.ann-row:last-child { border-bottom: none; }
+.ann-code { font-family: var(--font-m); font-size: 0.83rem; color: var(--code-text); }
+.ann-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+  padding-top: 2px;
+  white-space: nowrap;
+}
+.ann-label strong { color: var(--accent); font-weight: 600; }
+
+/* ── Status code chips ───────────────────────────────── */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin: 28px 0;
+}
+.status-card {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 18px 20px;
+  background: var(--surface);
+}
+.status-code {
+  font-family: var(--font-m);
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.status-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.status-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+.s-ok .status-code { color: var(--ok); }
+.s-ok { border-color: rgba(52,211,153,.25); background: var(--ok-bg); }
+.s-warn .status-code { color: var(--warn); }
+.s-warn { border-color: rgba(251,191,36,.25); background: var(--warn-bg); }
+.s-err .status-code { color: var(--err); }
+.s-err { border-color: rgba(248,113,113,.25); background: var(--err-bg); }
+
+/* ── Endpoint cards ──────────────────────────────────── */
+.endpoint-list { display: flex; flex-direction: column; gap: 20px; margin: 28px 0; }
+.endpoint-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.endpoint-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.method-badge {
+  font-family: var(--font-m);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: var(--cyan-bg);
+  color: var(--cyan);
+  border: 1px solid rgba(34,211,238,.2);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.endpoint-url {
+  font-family: var(--font-m);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  overflow-x: auto;
+}
+.endpoint-url strong { color: var(--text); }
+.endpoint-body { padding: 16px 18px; }
+.endpoint-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 12px; }
+
+.param-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; overflow-x: auto; display: block; }
+.param-table th {
+  font-family: var(--font-m);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+.param-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.param-table tr:last-child td { border-bottom: none; }
+.param-name { font-family: var(--font-m); color: var(--cyan); }
+.req-badge {
+  font-family: var(--font-m);
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--err-bg);
+  color: var(--err);
+  border: 1px solid rgba(248,113,113,.2);
+}
+.opt-badge {
+  font-family: var(--font-m);
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* ── Architecture diagram ────────────────────────────── */
+.arch-diagram {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  gap: 0;
+  margin: 32px 0;
+}
+@media (max-width: 580px) {
+  .arch-diagram { grid-template-columns: 1fr; }
+  .arch-arrow { transform: rotate(90deg); }
+}
+.arch-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 16px;
+}
+.arch-box-name {
+  font-family: var(--font-m);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.arch-box-desc { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+.arch-box-fn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 10px;
+}
+.arch-fn {
+  font-family: var(--font-m);
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  display: inline-block;
+  width: fit-content;
+}
+.arch-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 16px;
+}
+.arch-arrow-line {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+.arch-arrow-label {
+  font-family: var(--font-m);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 80px;
+  line-height: 1.3;
+}
+
+/* ── Test scenarios ──────────────────────────────────── */
+.test-list { display: flex; flex-direction: column; gap: 10px; margin: 24px 0; }
+.test-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.test-status {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ok-bg);
+  border: 1px solid var(--ok);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.test-status svg { width: 10px; height: 10px; color: var(--ok); }
+.test-body {}
+.test-name { font-size: 0.88rem; font-weight: 600; margin-bottom: 4px; }
+.test-code { font-family: var(--font-m); font-size: 0.75rem; color: var(--text-muted); }
+
+/* ── Key concepts ────────────────────────────────────── */
+.concept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin: 28px 0;
+}
+.concept-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+.concept-icon {
+  font-family: var(--font-m);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.concept-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; }
+.concept-body { font-size: 0.83rem; color: var(--text-muted); line-height: 1.6; }
+
+/* ── Info callout ────────────────────────────────────── */
+.callout {
+  display: flex;
+  gap: 12px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 20px 0;
+  font-size: 0.87rem;
+}
+.callout-icon { flex-shrink: 0; color: var(--accent); margin-top: 1px; }
+
+/* ── Footer ──────────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 36px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: var(--font-m);
+}
+</style>
+
+<!-- ─────────────── HERO ─────────────────────────────── -->
+<div class="page">
+  <header class="hero">
+    <p class="hero-eyebrow">SWE101 · Development 03</p>
+    <h1>HTTP ve<br><em>Web Anatomisi</em></h1>
+    <p class="hero-lead">
+      Bir public API'yi tüketici gözüyle okumak: DevTools'tan Postman'e,
+      sözleşme dokümantasyonundan Node.js scripti ve fixture tabanlı teste.
+    </p>
+    <div class="hero-meta">
+      <span class="tag">Open-Meteo API</span>
+      <span class="tag">Node.js 22+</span>
+      <span class="tag">node:test</span>
+      <span class="tag">ESM</span>
+      <span class="tag">Fixture-based Testing</span>
+    </div>
+  </header>
+</div>
+
+<!-- ─────────────── HTTP ANATOMİSİ ───────────────────── -->
+<div class="page">
+  <section class="section">
+    <p class="section-label">Temel Kavram</p>
+    <h2>HTTP İsteği ve Yanıtı</h2>
+    <p>
+      Her API çağrısının altında iki sade metin mesajı yatar: bir <strong>istek</strong> ve bir <strong>yanıt</strong>.
+      HTTP'nin sözleşmesi tam olarak bu iki mesajın biçimini ve olası değerlerini tanımlar.
+      DevTools'ta gördüğün her satır bu yapının bir yansımasıdır.
+    </p>
+
+    <div class="http-split">
+      <div class="http-box">
+        <div class="http-box-header">
+          <span class="arrow-right">→</span>
+          <span style="font-family:var(--font-m);font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">İSTEK (Request)</span>
+        </div>
+        <pre><span class="t-kw">GET</span> <span class="t-url">/v1/forecast?latitude=41.01
+   &longitude=28.95
+   &daily=temperature_2m_max
+   &timezone=Europe/Istanbul</span> HTTP/1.1
+<span class="t-hk">Host:</span>   <span class="t-hv">api.open-meteo.com</span>
+<span class="t-hk">Accept:</span> <span class="t-hv">*/*</span>
+
+<span class="t-cm">(body yok — GET isteği)</span></pre>
+      </div>
+      <div class="http-box">
+        <div class="http-box-header">
+          <span class="arrow-left">←</span>
+          <span style="font-family:var(--font-m);font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">YANIT (Response)</span>
+        </div>
+        <pre>HTTP/1.1 <span class="t-st">200 OK</span>
+<span class="t-hk">Content-Type:</span> <span class="t-hv">application/json</span>
+<span class="t-hk">Access-Control-Allow-Origin:</span> <span class="t-hv">*</span>
+
+{
+  <span class="t-key">"latitude"</span>: <span class="t-num">41.0</span>,
+  <span class="t-key">"daily"</span>: {
+    <span class="t-key">"time"</span>: [<span class="t-str">"2026-09-07"</span>],
+    <span class="t-key">"temperature_2m_max"</span>: [<span class="t-num">27.0</span>]
+  }
+}</pre>
+      </div>
+    </div>
+
+    <p>Bir isteğin dört bileşeni vardır — hepsini gerçek bir istekten okuyabiliriz:</p>
+
+    <div class="annotated">
+      <div class="ann-row">
+        <span class="ann-code"><span class="t-kw">GET</span></span>
+        <span class="ann-label"><strong>Metot</strong> — kaynağa ne yapılacağı</span>
+      </div>
+      <div class="ann-row">
+        <span class="ann-code"><span class="t-url">/v1/forecast?latitude=41&amp;longitude=29</span></span>
+        <span class="ann-label"><strong>Path + Query</strong> — hangi kaynak, hangi filtreler</span>
+      </div>
+      <div class="ann-row">
+        <span class="ann-code"><span class="t-hk">Host:</span> <span class="t-hv">api.open-meteo.com</span></span>
+        <span class="ann-label"><strong>Header</strong> — metadata; zorunlu ya da opsiyonel</span>
+      </div>
+      <div class="ann-row">
+        <span class="ann-code"><span class="t-cm">(body yok)</span></span>
+        <span class="ann-label"><strong>Body</strong> — GET'te boş; POST/PUT'ta veri taşır</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ─────────────── STATUS CODES ─────────────────────── -->
+<div class="page">
+  <section class="section">
+    <p class="section-label">Protokol Sözleşmesi</p>
+    <h2>Status Code'lar</h2>
+    <p>
+      Yanıtın ilk satırındaki üç haneli sayı — <strong>status code</strong> — sunucunun isteği
+      nasıl değerlendirdiğini söyler. Bu kodların aralıkları sözleşmenin bir parçasıdır;
+      body'yi parse etmeden önce kodu kontrol etmek doğru tasarımdır.
+    </p>
+
+    <div class="status-grid">
+      <div class="status-card s-ok">
+        <div class="status-code">200</div>
+        <div class="status-name">OK</div>
+        <div class="status-desc">İstek başarılı; body veriyi içeriyor. Open-Meteo bu örnekte <code>daily</code> tahmin verisini döndürüyor.</div>
+      </div>
+      <div class="status-card s-err">
+        <div class="status-code">400</div>
+        <div class="status-name">Bad Request</div>
+        <div class="status-desc">Parametre hatalı ya da aralık dışı. Open-Meteo'nun body'si: <code>{"reason":"Latitude must be in range..."}</code></div>
+      </div>
+      <div class="status-card s-warn">
+        <div class="status-code">404</div>
+        <div class="status-name">Not Found</div>
+        <div class="status-desc">Kaynak mevcut değil. Geocoding API bilinmeyen şehirde 404 değil, <strong>200 + boş results dizisi</strong> döner — body'yi kontrol etmek zorunlu.</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-icon">◈</span>
+      <p>
+        <strong>Status code yeterli değil.</strong> Geocoding API bilinmeyen şehir için
+        <code>200</code> döndürüp <code>results: []</code> veriyor. Bu yüzden scriptte
+        <code>status !== 200</code> kontrolüne ek olarak <code>results.length</code> da
+        kontrol edilmesi gerekiyor. Sözleşmeyi okumadan bu detay gözden kaçardı.
+      </p>
+    </div>
+  </section>
+</div>
+
+<!-- ─────────────── API SÖZLEŞMESİ ──────────────────── -->
+<div class="page">
+  <section class="section">
+    <p class="section-label">Keşfedilen Endpoint'ler</p>
+    <h2>API Sözleşmesi</h2>
+    <p>
+      Postman'de keşfedilen dört endpoint — her biri için metot, URL, parametreler
+      ve gözlemlenen status code'lar. "Sözleşmeyi okuyan biri Postman'i açıp
+      API'yi senin kadar iyi kullanabilmeli" hedefi bu dokümantasyonun ölçütü.
+    </p>
+
+    <div class="endpoint-list">
+
+      <!-- Endpoint 1 -->
+      <div class="endpoint-card">
+        <div class="endpoint-head">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-url"><strong>api.open-meteo.com</strong>/v1/forecast</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">7 günlük (veya 1–16 günlük) günlük hava tahmini. Scriptin ana endpoint'i. <code>daily</code> parametresiyle hangi değişkenlerin isteneceği seçilir.</p>
+          <div style="overflow-x:auto">
+            <table class="param-table">
+              <thead><tr><th>Parametre</th><th>Zorunlu?</th><th>Açıklama</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">latitude, longitude</td><td><span class="req-badge">zorunlu</span></td><td>Koordinat (−90/90, −180/180)</td></tr>
+                <tr><td class="param-name">daily</td><td><span class="req-badge">zorunlu</span></td><td>Virgülle ayrılmış değişkenler: <code>temperature_2m_max</code>, <code>precipitation_sum</code>, …</td></tr>
+                <tr><td class="param-name">timezone</td><td><span class="opt-badge">opsiyonel</span></td><td><code>auto</code> ya da <code>Europe/Istanbul</code> — tarihleri yerel saate göre hizalar</td></tr>
+                <tr><td class="param-name">forecast_days</td><td><span class="opt-badge">opsiyonel</span></td><td>1–16, varsayılan 7</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:.8rem;color:var(--text-muted);margin-top:10px">Gözlemlenen status: <span style="color:var(--ok)">200 OK</span> · <span style="color:var(--err)">400 Bad Request</span></p>
+        </div>
+      </div>
+
+      <!-- Endpoint 2 -->
+      <div class="endpoint-card">
+        <div class="endpoint-head">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-url"><strong>api.open-meteo.com</strong>/v1/forecast <span style="color:var(--accent)">?current=…</span></span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Anlık hava durumu. <code>daily</code> yerine <code>current</code> parametresi kullanılır. Aynı endpoint, farklı parametre.</p>
+          <div style="overflow-x:auto">
+            <table class="param-table">
+              <thead><tr><th>Parametre</th><th>Zorunlu?</th><th>Açıklama</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">current</td><td><span class="req-badge">zorunlu</span></td><td><code>temperature_2m</code>, <code>wind_speed_10m</code>, <code>weather_code</code>, …</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:.8rem;color:var(--text-muted);margin-top:10px">Gözlemlenen status: <span style="color:var(--ok)">200 OK</span></p>
+        </div>
+      </div>
+
+      <!-- Endpoint 3 -->
+      <div class="endpoint-card">
+        <div class="endpoint-head">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-url"><strong>api.open-meteo.com</strong>/v1/archive</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">ERA5 reanaliz veritabanından 1940'a kadar giden tarihsel hava verisi. <code>start_date</code> / <code>end_date</code> zorunlu; bitiş tarihi en fazla dün olabilir.</p>
+          <div style="overflow-x:auto">
+            <table class="param-table">
+              <thead><tr><th>Parametre</th><th>Zorunlu?</th><th>Açıklama</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">start_date, end_date</td><td><span class="req-badge">zorunlu</span></td><td>ISO 8601 formatı: <code>YYYY-MM-DD</code></td></tr>
+                <tr><td class="param-name">daily</td><td><span class="req-badge">zorunlu</span></td><td>İstenen değişkenler</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:.8rem;color:var(--text-muted);margin-top:10px">Gözlemlenen status: <span style="color:var(--ok)">200 OK</span> · <span style="color:var(--err)">400 Bad Request</span></p>
+        </div>
+      </div>
+
+      <!-- Endpoint 4 -->
+      <div class="endpoint-card">
+        <div class="endpoint-head">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-url"><strong>geocoding-api.open-meteo.com</strong>/v1/search</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Şehir adından koordinat ve zaman dilimi çözümleme. Script CLI argümanını (<code>node src/index.js Tokyo</code>) koordinata dönüştürmek için bu endpoint'i kullanır.</p>
+          <div style="overflow-x:auto">
+            <table class="param-table">
+              <thead><tr><th>Parametre</th><th>Zorunlu?</th><th>Açıklama</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">name</td><td><span class="req-badge">zorunlu</span></td><td>Şehir adı — kısmi eşleşmeyi kabul eder</td></tr>
+                <tr><td class="param-name">count</td><td><span class="opt-badge">opsiyonel</span></td><td>Sonuç adedi, varsayılan 10</td></tr>
+                <tr><td class="param-name">language</td><td><span class="opt-badge">opsiyonel</span></td><td><code>en</code>, <code>tr</code>, …</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout" style="margin-top:12px;margin-bottom:0">
+            <span class="callout-icon">◈</span>
+            <p style="font-size:.82rem">Bulunamayan şehirde <strong>200 OK</strong> + <code>results: []</code> — <code>404</code> değil. Bu bir sözleşme detayıdır ve ancak Postman'de deneyerek anlaşılır.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Hata body örneği -->
+    <h3 style="margin-top:32px;margin-bottom:12px">Hata cevabı da sözleşmenin parçasıdır</h3>
+    <p style="margin-bottom:16px">Open-Meteo 400 döndürdüğünde body'sinde <code>reason</code> alanı bulunur — scriptteki <code>toErrorMessage()</code> bu alanı okuyarak kullanıcıya anlamlı mesaj gösterir.</p>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
+        <span>400 Bad Request — response body</span>
+      </div>
+      <pre>{
+  <span class="t-key">"reason"</span>: <span class="t-str">"Latitude must be in range of -90 to 90°. Given: 999.0."</span>,
+  <span class="t-key">"error"</span>: <span class="t-kw">true</span>
+}</pre>
+    </div>
+  </section>
+</div>
+
+<!-- ─────────────── MİMARİ ───────────────────────────── -->
+<div class="page">
+  <section class="section">
+    <p class="section-label">Kod Tasarımı</p>
+    <h2>Modüler Mimari</h2>
+    <p>
+      Ödevin en kritik yapısal kısıtı: <strong>fetch katmanı ve dönüşüm fonksiyonları ayrı modüllerde</strong>.
+      Bu ayrım kulağa basit gelir — ama test yazılabilirliği açısından belirleyicidir.
+    </p>
+
+    <div class="arch-diagram">
+      <div class="arch-box">
+        <div class="arch-box-name">fetch.js</div>
+        <div class="arch-box-desc">API ile konuşur. Ağa bağımlı. Dönüşüm bilmez.</div>
+        <div class="arch-box-fn">
+          <span class="arch-fn">fetchGeocode(city)</span>
+          <span class="arch-fn">fetchForecast(lat, lon)</span>
+          <span class="arch-fn">fetchCurrent(lat, lon)</span>
+          <span class="arch-fn">fetchArchive(lat, lon, …)</span>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <span class="arch-arrow-line">→</span>
+        <span class="arch-arrow-label">{ status, ok, data }</span>
+      </div>
+      <div class="arch-box">
+        <div class="arch-box-name">transform.js</div>
+        <div class="arch-box-desc">Saf fonksiyonlar. Ağ bilmez. Test edilebilir.</div>
+        <div class="arch-box-fn">
+          <span class="arch-fn">toErrorMessage(status)</span>
+          <span class="arch-fn">findHottestDay(daily)</span>
+          <span class="arch-fn">formatForecast(daily)</span>
+          <span class="arch-fn">formatTemp(celsius)</span>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <span class="arch-arrow-line">→</span>
+        <span class="arch-arrow-label">dönüşmüş veri</span>
+      </div>
+      <div class="arch-box">
+        <div class="arch-box-name">index.js</div>
+        <div class="arch-box-desc">Yönetici. Hata kontrolü ve çıktı üretimi.</div>
+        <div class="arch-box-fn">
+          <span class="arch-fn">process.argv[2]</span>
+          <span class="arch-fn">process.exit(1)</span>
+          <span class="arch-fn">console.log()</span>
+        </div>
+      </div>
+    </div>
+
+    <p>
+      <code>transform.js</code> içindeki fonksiyonlar — <code>findHottestDay</code>, <code>formatTemp</code>, <code>toErrorMessage</code> —
+      sadece JavaScript değerleri alır ve döndürür. Hiçbirinde <code>fetch</code> çağrısı yok.
+      Bu yüzden internet bağlantısı olmadan, kaydedilmiş bir JSON dosyasıyla test edilebilirler.
+    </p>
+
+    <div class="callout" style="margin-top:20px">
+      <span class="callout-icon">◈</span>
+      <p>
+        <strong>Neden önemli:</strong> fetch ve dönüşüm birbirine karışsaydı testler ya ağa bağımlı olurdu
+        (CI'da flakey, API kapalıyken kırık), ya da karmaşık mock altyapısı gerekirdi.
+        Ayrım sadelik getirir: "ağa bağlı kod ağ olmadan test edilmez, dönüşüm kodu edilir."
+      </p>
+    </div>
+
+    <!-- process.exit(1) pattern -->
+    <h3 style="margin-top:32px;margin-bottom:12px">Erken Çıkış Deseni</h3>
+    <p style="margin-bottom:16px">
+      200 dışı bir yanıt geldiğinde — ya da geocoding sonuç döndürmediğinde — script
+      stack trace atmadan temiz bir mesajla çıkar. Bu Unix CLI sözleşmesidir:
+      başarı = exit 0, hata = exit 1.
+    </p>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
+        <span>src/index.js — hata yönetimi</span>
+      </div>
+      <pre><span class="t-kw">const</span> { status, data } = <span class="t-kw">await</span> fetchForecast(lat, lon, tz);
+
+<span class="t-kw">if</span> (status !== <span class="t-num">200</span>) {
+  console.<span class="t-kw">error</span>(<span class="t-str">`Hata: <span class="t-kw">${</span>toErrorMessage(status, data)<span class="t-kw">}</span>`</span>);
+  process.<span class="t-kw">exit</span>(<span class="t-num">1</span>);  <span class="t-cm">// stack trace yok — okunur mesaj, sonra çıkış</span>
+}
+
+<span class="t-cm">// buraya sadece 200 OK ile ulaşılır</span>
+<span class="t-kw">const</span> hottest = findHottestDay(data.daily);</pre>
+    </div>
+  </section>
+</div>
+
+<!-- ─────────────── TEST ──────────────────────────────── -->
+<div class="page">
+  <section class="section">
+    <p class="section-label">Test Stratejisi</p>
+    <h2>Fixture Tabanlı Unit Test</h2>
+    <p>
+      Testler gerçek API'ye çıkmaz. Bunun yerine, gerçek bir API cevabından kopyalanmış
+      bir JSON dosyası — <strong>fixture</strong> — kullanılır. Bu sayede testler:
+      internet yokken de çalışır, API kapalıyken de yeşildir, CI'da güvenilirdir.
+    </p>
+
+    <div class="callout">
+      <span class="callout-icon">◈</span>
+      <p>
+        <strong>Fixture'ı kendin kopyala.</strong> Uydurma fixture, gerçek API'nin alan adlarını yanlış
+        tahmin ettiğinde testler yeşil ama script kırık olur — bu "testlerin sana yalan söylemesi"
+        durumudur ve hiç test olmaktan kötüdür. <code>istanbul-forecast.json</code> gerçek API cevabından
+        kopyalandı.
+      </p>
+    </div>
+
+    <div class="test-list">
+      <div class="test-item">
+        <div class="test-status">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8">
+            <polyline points="1.5,5 4,7.5 8.5,2.5"/>
+          </svg>
+        </div>
+        <div class="test-body">
+          <div class="test-name">Beklenen veri — en sıcak günü doğru bulur</div>
+          <div class="test-code">findHottestDay(fixture.daily) → { date: "2026-09-12", maxTemp: 28.1 }</div>
+        </div>
+      </div>
+      <div class="test-item">
+        <div class="test-status">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8">
+            <polyline points="1.5,5 4,7.5 8.5,2.5"/>
+          </svg>
+        </div>
+        <div class="test-body">
+          <div class="test-name">Boş liste — null döner</div>
+          <div class="test-code">findHottestDay({ time: [], temperature_2m_max: [] }) → null</div>
+        </div>
+      </div>
+      <div class="test-item">
+        <div class="test-status">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8">
+            <polyline points="1.5,5 4,7.5 8.5,2.5"/>
+          </svg>
+        </div>
+        <div class="test-body">
+          <div class="test-name">Eksik alan — null değerleri filtreler, null döner</div>
+          <div class="test-code">findHottestDay({ time: ["…"], temperature_2m_max: [null, null] }) → null</div>
+        </div>
+      </div>
+      <div class="test-item">
+        <div class="test-status">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8">
+            <polyline points="1.5,5 4,7.5 8.5,2.5"/>
+          </svg>
+        </div>
+        <div class="test-body">
+          <div class="test-name">200 dışı status → okunabilir hata mesajı (API reason ile)</div>
+          <div class="test-code">toErrorMessage(400, { reason: "Latitude must be…" }) → "Geçersiz istek: Latitude…"</div>
+        </div>
+      </div>
+      <div class="test-item">
+        <div class="test-status">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8">
+            <polyline points="1.5,5 4,7.5 8.5,2.5"/>
+          </svg>
+        </div>
+        <div class="test-body">
+          <div class="test-name">Tanımsız status kodu → kodu içeren genel mesaj</div>
+          <div class="test-code">toErrorMessage(418) → "Beklenmeyen hata (HTTP 418)."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-wrap" style="margin-top:24px">
+      <div class="code-header">
+        <div class="dots"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
+        <span>Terminal — npm test</span>
+      </div>
+      <pre><span class="t-cm">$ node --test tests/transform.test.js</span>
+
+TAP version 13
+# Subtest: findHottestDay
+    ok 1 - fixture verisinden en sıcak günü doğru bulur
+    ok 2 - boş daily verisiyle null döner
+    ok 3 - tüm sıcaklıklar null ise null döner
+# Subtest: toErrorMessage
+    ok 1 - 400 için API'nin reason alanını hata mesajına yansıtır
+    ok 2 - tanımsız status kodu için HTTP kodunu içeren genel mesaj döner
+
+# pass  <span class="t-st">5</span>
+# fail  <span class="t-err">0</span></pre>
+    </div>
+  </section>
+</div>
+
+<!-- ─────────────── ÖĞRENİLENLER ────────────────────── -->
+<div class="page">
+  <section class="section">
+    <p class="section-label">Çıkarımlar</p>
+    <h2>Ne Öğrendim</h2>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-icon">Sözleşme</div>
+        <div class="concept-title">HTTP sözleşmesini tüketici gözüyle okumak</div>
+        <div class="concept-body">Postman'de endpoint'leri keşfederken "bu parametre yoksa ne olur?" diye sormak, sadece 200 gören koddan çok daha sağlam bir anlayış veriyor. Birkaç kart sonra aynı sözleşmeyi yazan taraf olunacak.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-icon">Body</div>
+        <div class="concept-title">Hata cevabı da sözleşmenin parçasıdır</div>
+        <div class="concept-body"><code>{"reason":"Latitude must be…"}</code> yapısını bilmeden anlamlı hata mesajı üretmek mümkün değil. 400 ve 404'ün body'si de dokümante edilmeli.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-icon">Mimari</div>
+        <div class="concept-title">Ayrım test yazmayı mümkün kılar</div>
+        <div class="concept-body">transform.js saf fonksiyonlar içerdiği için ağa çıkmadan test edilebilir. fetch ve dönüşüm iç içe olsaydı testler ya ağa bağımlı olurdu ya da mock altyapısı isterdi.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-icon">Status</div>
+        <div class="concept-title">Status code tek başına yeterli değil</div>
+        <div class="concept-body">Geocoding API bilinmeyen şehir için 404 değil, 200 + boş results dönüyor. Sözleşmeyi okumadan bu detay atlanırdı ve script hatalı çalışırdı.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-icon">CLI</div>
+        <div class="concept-title">process.exit(1) temiz çıkış sağlar</div>
+        <div class="concept-body">Stack trace atmak yerine okunur hata mesajı basıp çıkmak, scripti gerçek bir araç gibi hissettiriyor. CI ortamında da doğru çıkış kodu üretiyor.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-icon">Fixture</div>
+        <div class="concept-title">Gerçek API cevabından fixture kopyalanır</div>
+        <div class="concept-body">Uydurma fixture, gerçek API'nin alan adlarını yanlış tahmin ederse testler yeşil ama script kırık olur. istanbul-forecast.json gerçek bir API cevabıdır.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>SWE101 · Development-03 · Open-Meteo API · Node.js 22</span>
+    <span>github.com/0Ens/development-03-http-ve-web-anatomisi</span>
+  </footer>
+</div>

@@ -1,0 +1,13 @@
+{
+  "name": "development-03-http-ve-web-anatomisi",
+  "version": "1.0.0",
+  "description": "REST Countries API üzerinden HTTP sözleşmesi keşfi ve Node.js veri dönüşümü",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test tests/transform.test.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
