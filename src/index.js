@@ -5,14 +5,27 @@ const cityArg = process.argv[2] ?? 'Istanbul';
 
 console.log(`"${cityArg}" için 7 günlük hava tahmini alınıyor...\n`);
 
-const geoRes = await fetchGeocode(cityArg);
+let geoRes, forecastRes;
+try {
+  geoRes = await fetchGeocode(cityArg);
+} catch {
+  console.error('Ağ hatası: geocoding servisine ulaşılamadı.');
+  process.exit(1);
+}
+
 if (geoRes.status !== 200 || !geoRes.data?.results?.length) {
   console.error(`Hata: "${cityArg}" şehri bulunamadı.`);
   process.exit(1);
 }
 const { latitude, longitude, timezone, name, country } = geoRes.data.results[0];
 
-const forecastRes = await fetchForecast(latitude, longitude, timezone);
+try {
+  forecastRes = await fetchForecast(latitude, longitude, timezone);
+} catch {
+  console.error('Ağ hatası: hava durumu servisine ulaşılamadı.');
+  process.exit(1);
+}
+
 if (forecastRes.status !== 200) {
   console.error(`Hata: ${toErrorMessage(forecastRes.status, forecastRes.data)}`);
   process.exit(1);
